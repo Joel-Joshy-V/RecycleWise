@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mysql_project/salary.dart';
 import 'package:mysql_project/time_table.dart';
 import 'leave_request.dart';
 import 'event_management.dart';
@@ -11,9 +12,13 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Home',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white,),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
-        backgroundColor: const Color(0xFF6A1B9A), // Dark purple color for the AppBar
+        backgroundColor:
+            const Color(0xFF6A1B9A), // Dark purple color for the AppBar
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -51,7 +56,8 @@ class HomePage extends StatelessWidget {
                     () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => TimeTablePage()),
+                        MaterialPageRoute(
+                            builder: (context) => TimeTablePage()),
                       );
                     },
                   ),
@@ -62,7 +68,8 @@ class HomePage extends StatelessWidget {
                     () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => LeaveRequestPage()),
+                        MaterialPageRoute(
+                            builder: (context) => LeaveRequestPage()),
                       );
                     },
                   ),
@@ -70,7 +77,12 @@ class HomePage extends StatelessWidget {
                     Icons.monetization_on,
                     "Salary",
                     Colors.orange.shade600,
-                    () {},
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SalaryPage()),
+                      );
+                    },
                   ),
                   _buildIconButton(
                     Icons.event,
@@ -79,7 +91,8 @@ class HomePage extends StatelessWidget {
                     () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => EventManagementPage()),
+                        MaterialPageRoute(
+                            builder: (context) => EventManagementPage()),
                       );
                     },
                   ),
@@ -162,7 +175,8 @@ class HomePage extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.deepPurple[100],
-          child: Text(title[0], style: const TextStyle(color: Colors.deepPurple)),
+          child:
+              Text(title[0], style: const TextStyle(color: Colors.deepPurple)),
         ),
         title: Text(
           title,
