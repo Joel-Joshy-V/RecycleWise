@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home.dart'; // Import HomePage.
+import 'home.dart';
+import 'dart:async'; // For async operations
 
 class LoginPage extends StatefulWidget {
   @override
@@ -10,33 +11,33 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  String correctEmail = "admin";   // Mock email for login
-  String correctPassword = "1234"; // Mock password for login
+  bool isLoading = false;
+  String? errorMessage; // To display inline error
 
-  void login() {
-    if (emailController.text == correctEmail &&
-        passwordController.text == correctPassword) {
-      Navigator.push(
+  Future<void> login() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    // Simulate API call
+    await Future.delayed(Duration(seconds: 2));
+
+    if (emailController.text == "admin" &&
+        passwordController.text == "1234") {
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomePage()),
       );
     } else {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text("Error"),
-            content: Text("Invalid email or password!"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("OK"),
-              ),
-            ],
-          );
-        },
-      );
+      setState(() {
+        errorMessage = "Invalid email or password!";
+      });
     }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -46,63 +47,70 @@ class _LoginPageState extends State<LoginPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Staff Management',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 40),
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.visibility_off),
-                ),
-                obscureText: true,
-              ),
-              SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: login,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple, // Button background color
-                  foregroundColor: Colors.white,   // Button text color
-                  minimumSize: Size(double.infinity, 50), // Full width button
-                ),
-                child: Text('Sign In'), // Button label
-              ),
-              SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Don't have an account?"),
-                  TextButton(
-                    onPressed: () {},
-                    child: Text("Sign Up here"),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Staff Management',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
-              ),
-            ],
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 40),
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.visibility_off),
+                  ),
+                  obscureText: true,
+                ),
+                SizedBox(height: 24),
+                if (errorMessage != null) // Show error message inline
+                  Text(
+                    errorMessage!,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: isLoading ? null : login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(double.infinity, 50),
+                  ),
+                  child: isLoading
+                      ? CircularProgressIndicator(color: Colors.white)
+                      : Text('Sign In'),
+                ),
+                SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Don't have an account?"),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text("Sign Up here"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
-
-

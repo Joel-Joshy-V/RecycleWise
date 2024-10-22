@@ -24,7 +24,7 @@ class ProfilePage extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundImage: AssetImage('assets/profile_image.jpg'), // Replace with your image path
+                      backgroundImage: AssetImage('assets/profile_image.jpg'), // Ensure the path is correct
                     ),
                     const SizedBox(height: 16),
                     const Text(
@@ -95,6 +95,7 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
+                    // Using ListView.builder could be an option here if dynamic data is anticipated
                     _buildEducationTile(
                       "Ph.D. in Computer Science",
                       "Stanford University, 2010",

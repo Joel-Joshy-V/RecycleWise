@@ -39,8 +39,20 @@ class _SalaryPageState extends State<SalaryPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildSalaryCard(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _buildFinalSalaryCard(),
+            const SizedBox(height: 20),
+            // Add a button to simulate a call to a backend for updating leaves taken
+            ElevatedButton(
+              onPressed: () {
+                // Example action: Simulate an API call to update leaves taken
+                setState(() {
+                  leavesTaken = 20; // Update leaves taken
+                  calculateSalary(); // Recalculate salary
+                });
+              },
+              child: const Text('Update Leaves Taken'),
+            ),
           ],
         ),
       ),
@@ -67,13 +79,13 @@ class _SalaryPageState extends State<SalaryPage> {
                 color: Colors.purple[800],
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _buildDetailRow('Base Salary:', '₹${baseSalary.toStringAsFixed(2)}'),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             _buildDetailRow('Leaves Taken:', '$leavesTaken'),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             _buildDetailRow('Allowed Leaves:', '$allowedLeavesPerYear'),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             _buildDetailRow(
               'Salary Deduction:',
               '₹${(leavesTaken > allowedLeavesPerYear) ? (leavesTaken - allowedLeavesPerYear) * deductionPerLeave : 0}',
@@ -105,7 +117,7 @@ class _SalaryPageState extends State<SalaryPage> {
                 color: Colors.green[800],
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               '₹${finalSalary.toStringAsFixed(2)}',
               style: TextStyle(
@@ -114,7 +126,7 @@ class _SalaryPageState extends State<SalaryPage> {
                 color: (leavesTaken > allowedLeavesPerYear) ? Colors.red : Colors.green,
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             if (leavesTaken > allowedLeavesPerYear)
               Text(
                 'You have exceeded the allowed leaves!',
