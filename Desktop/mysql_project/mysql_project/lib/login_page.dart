@@ -80,10 +80,11 @@ class _LoginPageState extends State<LoginPage> {
               ElevatedButton(
                 onPressed: login,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  minimumSize: Size(double.infinity, 50),
+                  backgroundColor: Colors.purple, // Button background color
+                  foregroundColor: Colors.white,   // Button text color
+                  minimumSize: Size(double.infinity, 50), // Full width button
                 ),
-                child: Text('Sign In'),
+                child: Text('Sign In'), // Button label
               ),
               SizedBox(height: 16),
               Row(
@@ -103,4 +104,5 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+
 

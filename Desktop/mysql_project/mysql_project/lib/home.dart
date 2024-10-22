@@ -51,8 +51,7 @@ class HomePage extends StatelessWidget {
                     () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => TimeTablePage()),
+                        MaterialPageRoute(builder: (context) => TimeTablePage()),
                       );
                     },
                   ),
@@ -63,8 +62,7 @@ class HomePage extends StatelessWidget {
                     () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => LeaveRequestPage()),
+                        MaterialPageRoute(builder: (context) => LeaveRequestPage()),
                       );
                     },
                   ),
@@ -81,8 +79,7 @@ class HomePage extends StatelessWidget {
                     () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => EventManagementPage()),
+                        MaterialPageRoute(builder: (context) => EventManagementPage()),
                       );
                     },
                   ),
