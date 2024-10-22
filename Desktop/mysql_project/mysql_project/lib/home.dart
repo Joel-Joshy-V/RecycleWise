@@ -11,7 +11,7 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Home',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white,),
         ),
         backgroundColor: const Color(0xFF6A1B9A), // Dark purple color for the AppBar
         actions: [
