@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'realtime_detection_screen.dart';
+import 'scan_screen.dart';         // Make sure this imports your static image scanning screen.
 import 'dashboard_screen.dart';
 import 'ProfileScreen.dart';
 import 'WalletScreen.dart';
@@ -14,9 +14,9 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  // Replace ScanScreen() with RealtimeDetectionScreen()
+  // Use ScanScreen() for static image scanning instead of RealtimeDetectionScreen().
   final List<Widget> _screens = const [
-    RealtimeDetectionScreen(), // New real-time detection screen
+    ScanScreen(),         // Changed to static image scan
     DashboardScreen(),
     ProfileScreen(),
     WalletScreen(),
@@ -59,8 +59,8 @@ class _MainScreenState extends State<MainScreen> {
         child: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.videocam),
-              label: 'Realtime',
+              icon: Icon(Icons.camera_alt),  // Changed icon for scanning
+              label: 'Scan',                   // Changed label to "Scan"
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard),

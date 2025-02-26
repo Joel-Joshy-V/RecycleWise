@@ -4,75 +4,82 @@ import 'package:image_picker/image_picker.dart';
 import '../services/tflite_service.dart';
 
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key});
+  const ScanScreen({Key? key}) : super(key: key);
 
   @override
-  _ScanScreenState createState() => _ScanScreenState();
+  State<ScanScreen> createState() => _ScanScreenState();
 }
 
 class _ScanScreenState extends State<ScanScreen> {
-  File? _image;
   final ImagePicker _picker = ImagePicker();
-  String _result = 'Scan a waste item to see result';
-  bool _isLoading = false;
-
-  // Instance of our TFLiteService
+  File? _image;
+  String _result = 'No image scanned yet';
   final TFLiteService _tfliteService = TFLiteService();
+  bool _loading = false;
 
   @override
   void initState() {
     super.initState();
-    _tfliteService.loadModel();  // Load model on initialization
+    // Load the model when the screen initializes.
+    _tfliteService.loadModel();
   }
 
-  // Capture an image using the device camera.
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+  Future<void> _pickAndScanImage() async {
+    // Pick an image using the camera.
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       setState(() {
-        _isLoading = true;
+        _loading = true;
       });
-      _image = File(pickedFile.path);
-      String prediction = await _tfliteService.runInference(_image!);
+      File imageFile = File(pickedFile.path);
+      // Run inference on the captured image.
+      String label = await _tfliteService.runInference(imageFile);
       setState(() {
-        _result = prediction;
-        _isLoading = false;
+        _image = imageFile;
+        _result = label;
+        _loading = false;
       });
-      // Optionally, log this scan data to backend for points/carbon credit calculation.
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _image != null
-                ? Image.file(_image!, height: 300, fit: BoxFit.cover)
-                : Icon(Icons.image, size: 200, color: Colors.grey),
-            SizedBox(height: 20),
-            _isLoading
-                ? CircularProgressIndicator()
-                : Text(
-                    'Detected Waste: $_result',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Display the captured image or a placeholder.
+          _image != null
+              ? Image.file(_image!, height: 300, fit: BoxFit.cover)
+              : Container(
+                  height: 300,
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: Icon(Icons.image, size: 100, color: Colors.grey),
                   ),
-            SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _pickImage,
-              icon: Icon(Icons.camera_alt),
-              label: Text('Scan Waste'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                textStyle: TextStyle(fontSize: 18),
-              ),
+                ),
+          const SizedBox(height: 20),
+          // Show the detected label or a loading indicator.
+          _loading
+              ? const CircularProgressIndicator()
+              : Text(
+                  'Detected: $_result',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+          const SizedBox(height: 20),
+          // Button to capture and scan an image.
+          ElevatedButton.icon(
+            onPressed: _pickAndScanImage,
+            icon: const Icon(Icons.camera_alt),
+            label: const Text('Scan Image'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              textStyle: const TextStyle(fontSize: 18),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
