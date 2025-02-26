@@ -13,11 +13,11 @@ class TFLiteService {
     try {
       // Load the model from assets using tflite_flutter.
       _interpreter = await Interpreter.fromAsset(
-        'assets/waste_classifier.tflite',
+        'assets/ssd_mobilenet.tflite',
       );
 
       // Load labels from the labels.txt file in assets.
-      final labelData = await rootBundle.loadString('assets/labels.txt');
+      final labelData = await rootBundle.loadString('assets/ssd_mobilenet.txt');
       _labels =
           labelData
               .split('\n')

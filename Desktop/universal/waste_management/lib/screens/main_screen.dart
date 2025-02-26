@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'scan_screen.dart';
+import 'realtime_detection_screen.dart';
 import 'dashboard_screen.dart';
 import 'ProfileScreen.dart';
 import 'WalletScreen.dart';
@@ -14,8 +14,9 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
+  // Replace ScanScreen() with RealtimeDetectionScreen()
   final List<Widget> _screens = const [
-    ScanScreen(),
+    RealtimeDetectionScreen(), // New real-time detection screen
     DashboardScreen(),
     ProfileScreen(),
     WalletScreen(),
@@ -58,8 +59,8 @@ class _MainScreenState extends State<MainScreen> {
         child: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.camera_alt),
-              label: 'Scan',
+              icon: Icon(Icons.videocam),
+              label: 'Realtime',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard),
