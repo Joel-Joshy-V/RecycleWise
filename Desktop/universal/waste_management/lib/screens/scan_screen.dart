@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../services/tflite_service.dart';
 
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({Key? key}) : super(key: key);
+  const ScanScreen({super.key});
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -13,45 +13,56 @@ class ScanScreen extends StatefulWidget {
 class _ScanScreenState extends State<ScanScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _image;
-  String _result = 'No image scanned yet';
+  String _result = 'Ready to scan';
   final TFLiteService _tfliteService = TFLiteService();
   bool _loading = false;
 
   @override
   void initState() {
     super.initState();
-    _tfliteService.loadModel();
+    _initializeModel();
   }
 
-  Future<void> _pickAndScanImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
-      setState(() => _loading = true);
-      
-      try {
-        File imageFile = File(pickedFile.path);
-        String label = await _tfliteService.runInference(imageFile);
-        int points = _calculatePoints(label);
-        
-        setState(() {
-          _image = imageFile;
-          _result = '${label.split("(")[0]}\nPoints: $points';
-          _loading = false;
-        });
-      } catch (e) {
-        setState(() {
-          _loading = false;
-          _result = 'Error: ${e.toString()}';
-        });
-      }
+  Future<void> _initializeModel() async {
+    try {
+      await _tfliteService.loadModel();
+    } catch (e) {
+      setState(() => _result = 'Model failed to load');
+    }
+  }
+
+  Future<void> _scanImage() async {
+    final XFile? file = await _picker.pickImage(source: ImageSource.camera);
+    if (file == null) return;
+
+    setState(() {
+      _loading = true;
+      _result = 'Processing...';
+    });
+
+    try {
+      final imageFile = File(file.path);
+      final result = await _tfliteService.runInference(imageFile);
+      final points = _calculatePoints(result);
+
+      setState(() {
+        _image = imageFile;
+        _result = '${result.split("(")[0]}\nPoints Earned: $points';
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _result = 'Scan failed';
+      });
     }
   }
 
   int _calculatePoints(String label) {
     if (label.contains('plastic')) return 10;
+    if (label.contains('e-waste')) return 20;
     if (label.contains('paper')) return 8;
     if (label.contains('organic')) return 5;
-    if (label.contains('e-waste')) return 20;
     if (label.contains('hygiene')) return 3;
     return 0;
   }
@@ -60,65 +71,77 @@ class _ScanScreenState extends State<ScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan Waste'),
+        title: const Text('Waste Scanner'),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _image != null
-                ? Image.file(_image!, height: 300, fit: BoxFit.cover)
-                : Container(
-                    height: 300,
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(Icons.camera_alt, size: 100, color: Colors.grey),
+            Expanded(
+              child: _image != null
+                  ? Image.file(_image!, fit: BoxFit.cover)
+                  : Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.photo_camera, size: 80),
+                            Text('No image scanned'),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  _loading
+                      ? const CircularProgressIndicator()
+                      : Text(
+                          _result,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text('Scan Waste Item'),
+                      onPressed: _scanImage,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ),
-            const SizedBox(height: 20),
-            _loading
-                ? const CircularProgressIndicator()
-                : Column(
-                    children: [
-                      Text(
-                        'Detection Result:',
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        _result,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: _pickAndScanImage,
-              icon: const Icon(Icons.camera_alt),
-              label: const Text('Scan Item', style: TextStyle(fontSize: 18)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                ],
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _tfliteService.dispose();
+    super.dispose();
   }
 }

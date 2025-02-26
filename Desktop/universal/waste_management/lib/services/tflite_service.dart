@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as img;
@@ -18,14 +18,16 @@ class TFLiteService {
     76: 'e-waste',    // cell phone
     83: 'paper',      // book
     89: 'e-waste',    // hair drier
-    90: 'hygiene',    // toothbrush (index 90)
+    90: 'hygiene',    // toothbrush
   };
 
   Future<void> loadModel() async {
     try {
       _interpreter = await Interpreter.fromAsset(
         'assets/ssd_mobilenet.tflite',
-        options: InterpreterOptions()..threads = 4,
+        options: InterpreterOptions()
+          ..threads = 4
+          ..useNnApiForAndroid = true,
       );
       
       final labelData = await rootBundle.loadString('assets/ssd_mobilenet.txt');
@@ -33,24 +35,21 @@ class TFLiteService {
           .map((line) => line.trim())
           .where((line) => line.isNotEmpty)
           .toList();
-
+          
       if (_labels.length != 91) {
-        throw Exception('Label count mismatch (${_labels.length}/91)');
+        throw Exception('Label file must contain exactly 91 entries');
       }
-      print('Model loaded successfully with 91 labels');
     } catch (e) {
-      print("Error loading model: $e");
+      if (kDebugMode) {
+        debugPrint("Model initialization error: $e");
+      }
       rethrow;
     }
   }
 
-  Float32List preprocessImage(File imageFile, int inputWidth, int inputHeight) {
+  Float32List _preprocessImage(File imageFile, int inputWidth, int inputHeight) {
     final image = img.decodeImage(imageFile.readAsBytesSync())!;
-    final resizedImage = img.copyResize(
-      image,
-      width: inputWidth,
-      height: inputHeight,
-    );
+    final resizedImage = img.copyResize(image, width: inputWidth, height: inputHeight);
 
     final imageBuffer = Float32List(1 * inputHeight * inputWidth * 3);
     
@@ -69,42 +68,67 @@ class TFLiteService {
   Future<String> runInference(File imageFile) async {
     try {
       final inputTensor = _interpreter.getInputTensor(0);
-      final outputTensor = _interpreter.getOutputTensor(0);
-      
-      final outputLocations = List.filled(10 * 4, 0.0).reshape([1, 10, 4]);
+      final outputTensors = _interpreter.getOutputTensors();
+
+      // 1. Verify output tensor indices dynamically
+      final boxesIndex = outputTensors.indexWhere((t) => t.shape.toString() == '[1, 10, 4]');
+      final classesIndex = outputTensors.indexWhere((t) => t.shape.toString() == '[1, 10]');
+      final scoresIndex = outputTensors.indexWhere((t) => t.shape.toString() == '[1, 10]');
+      final countIndex = outputTensors.indexWhere((t) => t.shape.toString() == '[1, 1]');
+
+      if (boxesIndex == -1 || classesIndex == -1 || scoresIndex == -1 || countIndex == -1) {
+        throw Exception('Invalid model output structure');
+      }
+
+      // 2. Initialize outputs with verified dimensions
+      final outputBoxes = List.filled(10 * 4, 0.0).reshape([1, 10, 4]);
       final outputClasses = List.filled(10, 0.0).reshape([1, 10]);
       final outputScores = List.filled(10, 0.0).reshape([1, 10]);
-      final numDetections = List.filled(1, 0.0).reshape([1]);
+      final outputCount = List.filled(1, 0.0).reshape([1, 1]);
 
       _interpreter.runForMultipleInputs(
-        [preprocessImage(imageFile, inputTensor.shape[2], inputTensor.shape[1])],
-        {0: outputLocations, 1: outputClasses, 2: outputScores, 3: numDetections},
+        [_preprocessImage(imageFile, inputTensor.shape[2], inputTensor.shape[1])],
+        {
+          boxesIndex: outputBoxes,
+          classesIndex: outputClasses,
+          scoresIndex: outputScores,
+          countIndex: outputCount,
+        },
       );
 
-      final int numResults = numDetections[0].toInt().clamp(0, 10);
+      // 3. Safe value extraction with null checks
+      final numDetections = outputCount.isNotEmpty && 
+                          outputCount[0].isNotEmpty
+          ? outputCount[0][0].toInt().clamp(0, 10)
+          : 0;
+
       double maxScore = 0.0;
       String label = 'No waste detected';
 
-      for (int i = 0; i < numResults; i++) {
+      for (int i = 0; i < numDetections; i++) {
+        // Prevent index overflow
+        if (i >= outputScores[0].length || i >= outputClasses[0].length) break;
+
         final score = outputScores[0][i];
+        final classId = outputClasses[0][i].toInt();
+
         if (score > maxScore && score > 0.4) {
-          final classIndex = outputClasses[0][i].toInt();
-          
-          if (classIndex < 0 || classIndex >= _labels.length) {
-            print('Skipping invalid index: $classIndex');
-            continue;
+          if (classId >= 0 && classId < _labels.length) {
+            maxScore = score;
+            label = _wasteMapping[classId] ?? 'General Waste (${_labels[classId]})';
+          } else {
+            debugPrint('Skipping invalid class ID: $classId');
           }
-          
-          maxScore = score;
-          final rawLabel = _labels[classIndex];
-          label = _wasteMapping[classIndex]?.toString() ?? 'General Waste ($rawLabel)';
         }
       }
 
       return label;
-    } catch (e) {
-      print("Inference error: $e");
-      return 'Detection failed: ${e.toString().split(':').first}';
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('Inference error: $e');
+        debugPrint('Stack trace: $stackTrace');
+      }
+      return 'Detection failed';
     }
   }
 
